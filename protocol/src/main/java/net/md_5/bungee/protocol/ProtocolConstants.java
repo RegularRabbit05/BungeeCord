@@ -21,6 +21,7 @@ public class ProtocolConstants
     public static final int MINECRAFT_1_13 = 393;
     public static final int MINECRAFT_1_13_1 = 401;
     public static final int MINECRAFT_1_13_2 = 404;
+    public static final int MINECRAFT_SHAREWARE = 1;
     public static final int MINECRAFT_1_14 = 477;
     public static final int MINECRAFT_1_14_1 = 480;
     public static final int MINECRAFT_1_14_2 = 485;
@@ -29,6 +30,7 @@ public class ProtocolConstants
     public static final int MINECRAFT_1_15 = 573;
     public static final int MINECRAFT_1_15_1 = 575;
     public static final int MINECRAFT_1_15_2 = 578;
+    public static final int MINECRAFT_INFINITE = 709;
     public static final int MINECRAFT_1_16 = 735;
     public static final int MINECRAFT_1_16_1 = 736;
     public static final int MINECRAFT_1_16_2 = 751;
@@ -90,6 +92,7 @@ public class ProtocolConstants
                 ProtocolConstants.MINECRAFT_1_13,
                 ProtocolConstants.MINECRAFT_1_13_1,
                 ProtocolConstants.MINECRAFT_1_13_2,
+                ProtocolConstants.MINECRAFT_SHAREWARE,
                 ProtocolConstants.MINECRAFT_1_14,
                 ProtocolConstants.MINECRAFT_1_14_1,
                 ProtocolConstants.MINECRAFT_1_14_2,
@@ -98,6 +101,7 @@ public class ProtocolConstants
                 ProtocolConstants.MINECRAFT_1_15,
                 ProtocolConstants.MINECRAFT_1_15_1,
                 ProtocolConstants.MINECRAFT_1_15_2,
+                ProtocolConstants.MINECRAFT_INFINITE,
                 ProtocolConstants.MINECRAFT_1_16,
                 ProtocolConstants.MINECRAFT_1_16_1,
                 ProtocolConstants.MINECRAFT_1_16_2,
@@ -137,7 +141,6 @@ public class ProtocolConstants
 
     public enum Direction
     {
-
         TO_CLIENT, TO_SERVER;
     }
 }
