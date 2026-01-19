@@ -1,0 +1,47 @@
+name: Build and Release BungeeCord
+
+on:
+  push:
+    branches: 
+      - '**'
+  workflow_dispatch:
+
+permissions:
+  contents:  write
+
+jobs: 
+  build:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up JDK
+        uses: actions/setup-java@v4
+        with: 
+          java-version: '8'
+          distribution: 'temurin'
+          cache: maven
+
+      - name: Build with Maven
+        run: mvn clean package -DskipTests
+
+      - name: Generate timestamp
+        id: timestamp
+        run: |
+          echo "tag=$(date +%s)" >> $GITHUB_OUTPUT
+          echo "date=$(date +%Y-%m-%d)" >> $GITHUB_OUTPUT
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.timestamp.outputs.tag }}
+          name: Build ${{ steps.timestamp.outputs.date }}
+          files: bootstrap/target/BungeeCord.jar
+          generate_release_notes:  false
+          body: |
+            Automated build from commit ${{ github.sha }}
+            **Build Date:** ${{ steps.timestamp.outputs.date }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
