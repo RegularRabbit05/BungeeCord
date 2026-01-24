@@ -17,6 +17,7 @@ import net.md_5.bungee.protocol.MinecraftDecoder;
 import net.md_5.bungee.protocol.MinecraftEncoder;
 import net.md_5.bungee.protocol.PacketWrapper;
 import net.md_5.bungee.protocol.Protocol;
+import net.md_5.bungee.protocol.ProtocolConstants;
 import net.md_5.bungee.protocol.packet.Handshake;
 import net.md_5.bungee.protocol.packet.StatusRequest;
 import net.md_5.bungee.protocol.packet.StatusResponse;
@@ -28,7 +29,10 @@ public class PingHandler extends PacketHandler
 {
 
     static final Gson gson = VersionedComponentSerializer.getDefault().getGson().newBuilder()
-            .registerTypeAdapter( ServerPing.PlayerInfo.class, new PlayerInfoSerializer() )
+            .registerTypeAdapter( ServerPing.PlayerInfo.class, new PlayerInfoSerializer( ProtocolConstants.MINECRAFT_1_7_6 ) )
+            .registerTypeAdapter( Favicon.class, Favicon.getFaviconTypeAdapter() ).create();
+    static final Gson legacyGson = VersionedComponentSerializer.getDefault().getGson().newBuilder()
+            .registerTypeAdapter( ServerPing.PlayerInfo.class, new PlayerInfoSerializer( ProtocolConstants.MINECRAFT_1_7_2 ) )
             .registerTypeAdapter( Favicon.class, Favicon.getFaviconTypeAdapter() ).create();
     private final ServerInfo target;
     private final Callback<ServerPing> callback;
@@ -68,7 +72,7 @@ public class PingHandler extends PacketHandler
     @Override
     public void handle(StatusResponse statusResponse) throws Exception
     {
-        ServerPing serverPing = gson.fromJson( statusResponse.getResponse(), ServerPing.class );
+        ServerPing serverPing = protocol == ProtocolConstants.MINECRAFT_1_7_2 ? legacyGson.fromJson( statusResponse.getResponse(), ServerPing.class ) : gson.fromJson( statusResponse.getResponse(), ServerPing.class );
         ( (BungeeServerInfo) target ).cachePing( serverPing );
         callback.done( serverPing, null );
         channel.close();

@@ -61,18 +61,32 @@ public class PluginMessage extends DefinedPacket
     @Override
     public void read(ByteBuf buf, ProtocolConstants.Direction direction, int protocolVersion)
     {
-        tag = ( protocolVersion >= ProtocolConstants.MINECRAFT_1_13 ) ? MODERNISE.apply( readString( buf ) ) : readString( buf, 20 );
-        int maxSize = ( direction == ProtocolConstants.Direction.TO_SERVER ) ? Short.MAX_VALUE : 0x100000;
-        Preconditions.checkArgument( buf.readableBytes() <= maxSize, "Payload too large" );
-        data = new byte[ buf.readableBytes() ];
-        buf.readBytes( data );
+        if ( protocolVersion < ProtocolConstants.MINECRAFT_1_8 )
+        {
+            tag = readString( buf );
+            data = readArrayLegacy( buf );
+        } else
+        {
+            tag = ( protocolVersion >= ProtocolConstants.MINECRAFT_1_13 ) ? MODERNISE.apply( readString( buf ) ) : readString( buf, 20 );
+            int maxSize = ( direction == ProtocolConstants.Direction.TO_SERVER ) ? Short.MAX_VALUE : 0x100000;
+            Preconditions.checkArgument( buf.readableBytes() <= maxSize, "Payload too large" );
+            data = new byte[ buf.readableBytes() ];
+            buf.readBytes( data );
+        }
     }
 
     @Override
     public void write(ByteBuf buf, ProtocolConstants.Direction direction, int protocolVersion)
     {
-        writeString( ( protocolVersion >= ProtocolConstants.MINECRAFT_1_13 ) ? MODERNISE.apply( tag ) : tag, buf );
-        buf.writeBytes( data );
+        if ( protocolVersion < ProtocolConstants.MINECRAFT_1_8 )
+        {
+            writeString( tag, buf );
+            writeArrayLegacy( data, buf, allowExtendedPacket );
+        } else
+        {
+            writeString( ( protocolVersion >= ProtocolConstants.MINECRAFT_1_13 ) ? MODERNISE.apply( tag ) : tag, buf );
+            buf.writeBytes( data );
+        }
     }
 
     @Override

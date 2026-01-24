@@ -70,22 +70,28 @@ public class Team extends DefinedPacket
                 collisionRule = Either.right( CollisionRule.BY_ID[readVarInt( buf )] );
             } else
             {
-                nameTagVisibility = Either.left( readString( buf ) );
-                if ( protocolVersion >= ProtocolConstants.MINECRAFT_1_9 )
+                if ( protocolVersion >= ProtocolConstants.MINECRAFT_1_8 )
                 {
-                    collisionRule = Either.left( readString( buf ) );
+                    nameTagVisibility = Either.left( readString( buf ) );
+                    if ( protocolVersion >= ProtocolConstants.MINECRAFT_1_9 )
+                    {
+                        collisionRule = Either.left( readString( buf ) );
+                    }
                 }
             }
-            color = ( protocolVersion >= ProtocolConstants.MINECRAFT_1_13 ) ? readVarInt( buf ) : buf.readByte();
-            if ( protocolVersion >= ProtocolConstants.MINECRAFT_1_13 )
+            if ( protocolVersion >= ProtocolConstants.MINECRAFT_1_8 )
             {
-                prefix = readEitherBaseComponent( buf, protocolVersion, false );
-                suffix = readEitherBaseComponent( buf, protocolVersion, false );
+                color = ( protocolVersion >= ProtocolConstants.MINECRAFT_1_13 ) ? readVarInt( buf ) : buf.readByte();
+                if ( protocolVersion >= ProtocolConstants.MINECRAFT_1_13 )
+                {
+                    prefix = readEitherBaseComponent( buf, protocolVersion, false );
+                    suffix = readEitherBaseComponent( buf, protocolVersion, false );
+                }
             }
         }
         if ( mode == 0 || mode == 3 || mode == 4 )
         {
-            int len = readVarInt( buf );
+            int len = protocolVersion >= ProtocolConstants.MINECRAFT_1_8 ? readVarInt( buf ) : buf.readShort();
             players = new String[ len ];
             for ( int i = 0; i < len; i++ )
             {
@@ -114,26 +120,35 @@ public class Team extends DefinedPacket
                 writeVarInt( collisionRule.getRight().ordinal(), buf );
             } else
             {
-                writeString( nameTagVisibility.getLeft(), buf );
-                if ( protocolVersion >= ProtocolConstants.MINECRAFT_1_9 )
+                if ( protocolVersion >= ProtocolConstants.MINECRAFT_1_8 )
                 {
-                    writeString( collisionRule.getLeft(), buf );
+                    writeString( nameTagVisibility.getLeft(), buf );
+                    if ( protocolVersion >= ProtocolConstants.MINECRAFT_1_9 )
+                    {
+                        writeString( collisionRule.getLeft(), buf );
+                    }
                 }
-            }
 
-            if ( protocolVersion >= ProtocolConstants.MINECRAFT_1_13 )
-            {
-                writeVarInt( color, buf );
-                writeEitherBaseComponent( prefix, buf, protocolVersion );
-                writeEitherBaseComponent( suffix, buf, protocolVersion );
-            } else
-            {
-                buf.writeByte( color );
+                if ( protocolVersion >= ProtocolConstants.MINECRAFT_1_13 )
+                {
+                    writeVarInt( color, buf );
+                    writeEitherBaseComponent( prefix, buf, protocolVersion );
+                    writeEitherBaseComponent( suffix, buf, protocolVersion );
+                } else
+                {
+                    buf.writeByte( color );
+                }
             }
         }
         if ( mode == 0 || mode == 3 || mode == 4 )
         {
-            writeVarInt( players.length, buf );
+            if ( protocolVersion >= ProtocolConstants.MINECRAFT_1_8 )
+            {
+                writeVarInt( players.length, buf );
+            } else
+            {
+                buf.writeShort( players.length );
+            }
             for ( String player : players )
             {
                 writeString( player, buf );

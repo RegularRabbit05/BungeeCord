@@ -18,6 +18,7 @@ import io.netty.buffer.Unpooled;
 import io.netty.channel.unix.DomainSocketAddress;
 import java.io.DataInput;
 import java.net.InetSocketAddress;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
@@ -197,7 +198,7 @@ public class DownstreamBridge extends PacketHandler
         switch ( objective.getAction() )
         {
             case 0:
-                serverScoreboard.addObjective( new Objective( objective.getName(), ( objective.getValue().isLeft() ) ? objective.getValue().getLeft() : con.getChatSerializer().toString( objective.getValue().getRight() ), objective.getType().toString() ) );
+                serverScoreboard.addObjective( new Objective( objective.getName(), ( objective.getValue().isLeft() ) ? objective.getValue().getLeft() : con.getChatSerializer().toString( objective.getValue().getRight() ), objective.getType() == null ? null : objective.getType().toString() ) );
                 break;
             case 1:
                 serverScoreboard.removeObjective( objective.getName() );
@@ -207,7 +208,7 @@ public class DownstreamBridge extends PacketHandler
                 if ( oldObjective != null )
                 {
                     oldObjective.setValue( ( objective.getValue().isLeft() ) ? objective.getValue().getLeft() : con.getChatSerializer().toString( objective.getValue().getRight() ) );
-                    oldObjective.setType( objective.getType().toString() );
+                    oldObjective.setType( objective.getType() == null ? null : objective.getType().toString() );
                 }
                 break;
             default:
@@ -284,9 +285,12 @@ public class DownstreamBridge extends PacketHandler
                 t.setPrefix( team.getPrefix().getLeftOrCompute( (component) -> con.getChatSerializer().toString( component ) ) );
                 t.setSuffix( team.getSuffix().getLeftOrCompute( (component) -> con.getChatSerializer().toString( component ) ) );
                 t.setFriendlyFire( team.getFriendlyFire() );
-                t.setNameTagVisibility( team.getNameTagVisibility().isLeft() ? team.getNameTagVisibility().getLeft() : team.getNameTagVisibility().getRight().getKey() );
+                if ( con.getPendingConnection().getVersion() >= ProtocolConstants.MINECRAFT_1_8 )
+                {
+                    t.setNameTagVisibility( team.getNameTagVisibility().isLeft() ? team.getNameTagVisibility().getLeft() : team.getNameTagVisibility().getRight().getKey() );
+                }
                 t.setColor( team.getColor() );
-                if ( team.getCollisionRule() != null )
+                if ( con.getPendingConnection().getVersion() >= ProtocolConstants.MINECRAFT_1_8 && team.getCollisionRule() != null )
                 {
                     t.setCollisionRule( team.getCollisionRule().isLeft() ? team.getCollisionRule().getLeft() : team.getCollisionRule().getRight().getKey() );
                 }
@@ -321,17 +325,24 @@ public class DownstreamBridge extends PacketHandler
 
         if ( pluginMessage.getTag().equals( con.getPendingConnection().getVersion() >= ProtocolConstants.MINECRAFT_1_13 ? "minecraft:brand" : "MC|Brand" ) )
         {
-            ByteBuf brand = Unpooled.wrappedBuffer( pluginMessage.getData() );
-            String serverBrand = DefinedPacket.readString( brand );
-            brand.release();
+            if ( con.getPendingConnection().getVersion() >= ProtocolConstants.MINECRAFT_1_8 )
+            {
+                ByteBuf brand = Unpooled.wrappedBuffer( pluginMessage.getData() );
+                String serverBrand = DefinedPacket.readString( brand );
+                brand.release();
 
-            brand = ByteBufAllocator.DEFAULT.heapBuffer();
-            DefinedPacket.writeString( bungee.getName() + " (" + bungee.getVersion() + ")" + " <- " + serverBrand, brand );
-            pluginMessage.setData( DefinedPacket.toArray( brand ) );
-            brand.release();
-            // changes in the packet are ignored so we need to send it manually
-            con.unsafe().sendPacket( pluginMessage );
-            throw CancelSendSignal.INSTANCE;
+                brand = ByteBufAllocator.DEFAULT.heapBuffer();
+                DefinedPacket.writeString( bungee.getName() + " (" + bungee.getVersion() + ")" + " <- " + serverBrand, brand );
+                pluginMessage.setData( DefinedPacket.toArray( brand ) );
+                brand.release();
+                // changes in the packet are ignored so we need to send it manually
+                con.unsafe().sendPacket( pluginMessage );
+                throw CancelSendSignal.INSTANCE;
+            } else
+            {
+                String serverBrand = new String( pluginMessage.getData(), StandardCharsets.UTF_8 );
+                pluginMessage.setData( ( bungee.getName() + " (" + bungee.getVersion() + ")" + " <- " + serverBrand ).getBytes( StandardCharsets.UTF_8 ) );
+            }
         }
 
         if ( pluginMessage.getTag().equals( PluginMessage.BUNGEE_CHANNEL_LEGACY ) )

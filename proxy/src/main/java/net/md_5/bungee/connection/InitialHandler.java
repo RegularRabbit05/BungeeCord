@@ -308,7 +308,7 @@ public class InitialHandler extends PacketHandler implements PendingConnection
                     @Override
                     public void done(ProxyPingEvent pingResult, Throwable error)
                     {
-                        Gson gson = PingHandler.gson;
+                        Gson gson = handshake.getProtocolVersion() == ProtocolConstants.MINECRAFT_1_7_2 ? PingHandler.legacyGson : PingHandler.gson;
                         unsafe.sendPacket( new StatusResponse( gson.toJson( pingResult.getResponse() ) ) );
                         thisState = State.PING;
                     }
@@ -851,8 +851,14 @@ public class InitialHandler extends PacketHandler implements PendingConnection
             }
         } else if ( input.getTag().equals( "MC|Brand" ) || input.getTag().equals( "minecraft:brand" ) )
         {
-            brandMessage = input;
-            clientBrand = DefinedPacket.readString( Unpooled.wrappedBuffer( input.getData() ) );
+            if ( getVersion() >= ProtocolConstants.MINECRAFT_1_8 )
+            {
+                brandMessage = input;
+                clientBrand = DefinedPacket.readString( Unpooled.wrappedBuffer( input.getData() ) );
+            } else
+            {
+                brandMessage = input;
+            }
         }
     }
 

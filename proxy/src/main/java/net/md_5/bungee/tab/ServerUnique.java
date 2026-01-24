@@ -3,6 +3,7 @@ package net.md_5.bungee.tab;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.UUID;
+import net.md_5.bungee.api.chat.TextComponent;
 import net.md_5.bungee.api.connection.ProxiedPlayer;
 import net.md_5.bungee.protocol.ProtocolConstants;
 import net.md_5.bungee.protocol.packet.PlayerListItem;
@@ -13,6 +14,7 @@ public class ServerUnique extends TabList
 {
 
     private final Collection<UUID> uuids = new HashSet<>();
+    private final Collection<String> usernames = new HashSet<>();
 
     public ServerUnique(ProxiedPlayer player)
     {
@@ -28,13 +30,25 @@ public class ServerUnique extends TabList
         {
             for ( PlayerListItem.Item item : playerListItem.getItems() )
             {
-                uuids.add( item.getUuid() );
+                if ( item.getUuid() != null )
+                {
+                    uuids.add( item.getUuid() );
+                } else
+                {
+                    usernames.add( item.getUsername() );
+                }
             }
         } else if ( action == PlayerListItem.Action.REMOVE_PLAYER )
         {
             for ( PlayerListItem.Item item : playerListItem.getItems() )
             {
-                uuids.remove( item.getUuid() );
+                if ( item.getUuid() != null )
+                {
+                    uuids.remove( item.getUuid() );
+                } else
+                {
+                    usernames.remove( item.getUsername() );
+                }
             }
         }
         player.unsafe().sendPacket( playerListItem );
@@ -72,26 +86,46 @@ public class ServerUnique extends TabList
     @Override
     public void onServerChange()
     {
+        PlayerListItem lPacket = new PlayerListItem();
+        lPacket.setAction( PlayerListItem.Action.REMOVE_PLAYER );
+        PlayerListItem.Item[] lItems = new PlayerListItem.Item[ uuids.size() + usernames.size() ];
+        int l = 0;
+        for ( UUID uuid : uuids )
+        {
+            PlayerListItem.Item item = lItems[l++] = new PlayerListItem.Item();
+            item.setUuid( uuid );
+        }
+        for ( String username : usernames )
+        {
+            PlayerListItem.Item item = lItems[l++] = new PlayerListItem.Item();
+            item.setUsername( username );
+            item.setDisplayName( TextComponent.fromLegacy( username ) );
+        }
+        lPacket.setItems( lItems );
+
         if ( player.getPendingConnection().getVersion() >= ProtocolConstants.MINECRAFT_1_19_3 )
         {
             PlayerListItemRemove packet = new PlayerListItemRemove();
             packet.setUuids( uuids.toArray( new UUID[ 0 ] ) );
             player.unsafe().sendPacket( packet );
+        } else if ( player.getPendingConnection().getVersion() >= ProtocolConstants.MINECRAFT_1_8 )
+        {
+            player.unsafe().sendPacket( lPacket );
         } else
         {
-            PlayerListItem packet = new PlayerListItem();
-            packet.setAction( PlayerListItem.Action.REMOVE_PLAYER );
-            PlayerListItem.Item[] items = new PlayerListItem.Item[ uuids.size() ];
-            int i = 0;
-            for ( UUID uuid : uuids )
+            for ( PlayerListItem.Item item : lPacket.getItems() )
             {
-                PlayerListItem.Item item = items[i++] = new PlayerListItem.Item();
-                item.setUuid( uuid );
+                PlayerListItem packet = new PlayerListItem();
+                packet.setAction( lPacket.getAction() );
+
+                packet.setItems( new PlayerListItem.Item[] {
+                    item
+                } );
+                player.unsafe().sendPacket( packet );
             }
-            packet.setItems( items );
-            player.unsafe().sendPacket( packet );
         }
         uuids.clear();
+        usernames.clear();
     }
 
     @Override

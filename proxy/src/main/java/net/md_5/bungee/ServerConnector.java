@@ -307,7 +307,7 @@ public class ServerConnector extends PacketHandler
                 user.unsafe().sendPacket( new ScoreboardObjective(
                         objective.getName(),
                         ( user.getPendingConnection().getVersion() >= ProtocolConstants.MINECRAFT_1_13 ) ? Either.right( user.getChatSerializer().deserialize( objective.getValue() ) ) : Either.left( objective.getValue() ),
-                        ScoreboardObjective.HealthDisplay.fromString( objective.getType() ),
+                        objective.getType() == null ? null : ScoreboardObjective.HealthDisplay.fromString( objective.getType() ),
                         (byte) 1, null )
                 );
             }
