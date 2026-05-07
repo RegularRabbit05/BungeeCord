@@ -35,7 +35,7 @@ jobs:
       - name: Create Release
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: ${{ github.run_number }}
+          tag_name: ${{ github.run_id }}
           name: Build ${{ steps.timestamp.outputs.date }}
           files: |
             bootstrap/target/BungeeCord.jar
@@ -44,6 +44,6 @@ jobs:
           body: |
             Automated build from commit ${{ github.sha }}
             **Build Date:** ${{ steps.timestamp.outputs.date }}
-            **Build Number:** ${{ github.run_number }}
+            **Build Number:** ${{ github.run_id }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
