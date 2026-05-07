@@ -25,18 +25,17 @@ jobs:
           cache: maven
 
       - name: Build with Maven
-        run: mvn clean package -DskipTests
+        run: mvn clean package -DskipTests -Dbuild.number=${{ github.run_number }}
 
       - name: Generate timestamp
         id: timestamp
         run: |
-          echo "tag=$(date +%s)" >> $GITHUB_OUTPUT
           echo "date=$(date +%Y-%m-%d)" >> $GITHUB_OUTPUT
 
       - name: Create Release
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: ${{ steps.timestamp.outputs.tag }}
+          tag_name: ${{ github.run_number }}
           name: Build ${{ steps.timestamp.outputs.date }}
           files: |
             bootstrap/target/BungeeCord.jar
@@ -45,5 +44,6 @@ jobs:
           body: |
             Automated build from commit ${{ github.sha }}
             **Build Date:** ${{ steps.timestamp.outputs.date }}
+            **Build Number:** ${{ github.run_number }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
