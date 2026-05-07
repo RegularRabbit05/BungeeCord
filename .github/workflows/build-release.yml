@@ -7,7 +7,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents:  write
+  contents: write
 
 jobs: 
   build:
@@ -38,8 +38,10 @@ jobs:
         with:
           tag_name: ${{ steps.timestamp.outputs.tag }}
           name: Build ${{ steps.timestamp.outputs.date }}
-          files: bootstrap/target/BungeeCord.jar
-          generate_release_notes:  false
+          files: |
+            bootstrap/target/BungeeCord.jar
+            module/*/target/*.jar
+          generate_release_notes: false
           body: |
             Automated build from commit ${{ github.sha }}
             **Build Date:** ${{ steps.timestamp.outputs.date }}
