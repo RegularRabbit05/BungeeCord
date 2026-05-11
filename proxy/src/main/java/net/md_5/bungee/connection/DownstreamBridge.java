@@ -300,7 +300,7 @@ public class DownstreamBridge extends PacketHandler
                 {
                     t.setNameTagVisibility( team.getNameTagVisibility().isLeft() ? team.getNameTagVisibility().getLeft() : team.getNameTagVisibility().getRight().getKey() );
                 }
-                t.setColor( team.getColor() );
+                t.setColor( team.getColor().orElse( 0 ) );
                 if ( con.getPendingConnection().getVersion() >= ProtocolConstants.MINECRAFT_1_8 && team.getCollisionRule() != null )
                 {
                     t.setCollisionRule( team.getCollisionRule().isLeft() ? team.getCollisionRule().getLeft() : team.getCollisionRule().getRight().getKey() );
